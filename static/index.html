@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Transparent Pics - Background Remover</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="container">
@@ -11,18 +11,19 @@
         <p>Upload an image to remove the background.</p>
         
         <div class="upload-area">
-            <img id="resultImage" src="" alt="">
+            <img id="original-image" src="" alt="" style="display: none; max-width: 100%; margin-bottom: 10px;">
+            <img id="result-image" src="" alt="" style="display: none; max-width: 100%; margin-bottom: 10px;">
         </div>
         
-        <input type="file" id="imageInput" accept="image/*" style="display: none;">
-        <input type="text" id="apiKeyInput" value="not_needed" style="display: none;">
+        <input type="file" id="image-upload" accept="image/*" style="display: none;">
         
         <div class="buttons">
-            <button class="btn-free" onclick="document.getElementById('imageInput').click()">Upload Image</button>
-            <button class="btn-premium" onclick="removeBackground()">Remove Background</button>
+            <button id="upload-btn" class="btn-free">Upload Image</button>
+            <button id="remove-bg-btn" class="btn-premium">Remove Background</button>
+            <a id="download-btn" href="#" class="btn-free" style="display: none;" download="background-removed.png">Download Image</a>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="/static/script.js"></script>
 </body>
 </html>

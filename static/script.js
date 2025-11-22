@@ -1,51 +1,81 @@
-let apiKey = '';
+document.addEventListener('DOMContentLoaded', () => {
+    const imageUpload = document.getElementById('image-upload');
+    const uploadBtn = document.getElementById('upload-btn');
+    const removeBgBtn = document.getElementById('remove-bg-btn');
+    const originalImage = document.getElementById('original-image');
+    const resultImage = document.getElementById('result-image');
+    const downloadBtn = document.getElementById('download-btn');
+    
+    let uploadedFile = null;
 
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        const response = await fetch('http://127.0.0.1:8000/api-key');
-        const data = await response.json();
-        apiKey = data.api_key;
-    } catch (error) {
-        console.error('Error fetching API key:', error);
-        alert('Could not fetch API key. Please check the server.');
-    }
-});
+    uploadBtn.addEventListener('click', () => {
+        imageUpload.click();
+    });
 
-async function removeBackground() {
-    const imageInput = document.getElementById('imageInput');
-    const resultImage = document.getElementById('resultImage');
-
-    if (imageInput.files.length === 0) {
-        alert('Please select an image file.');
-        return;
-    }
-
-    if (!apiKey) {
-        alert('API key not loaded yet. Please try again in a moment.');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', imageInput.files[0]);
-
-    try {
-        const response = await fetch('http://127.0.0.1:8000/remove-background/', {
-            method: 'POST',
-            headers: {
-                'X-API-Key': apiKey,
-            },
-            body: formData,
-        });
-
-        if (response.ok) {
-            const blob = await response.blob();
-            const imageUrl = URL.createObjectURL(blob);
-            resultImage.src = imageUrl;
-        } else {
-            alert('Error removing background: ' + response.statusText);
+    imageUpload.addEventListener('change', (event) => {
+        uploadedFile = event.target.files[0];
+        if (uploadedFile) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalImage.src = e.target.result;
+                originalImage.style.display = 'block';
+                resultImage.style.display = 'none';
+                downloadBtn.style.display = 'none';
+            };
+            reader.readAsDataURL(uploadedFile);
         }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('An error occurred while processing the request.');
-    }
-}
+    });
+
+    removeBgBtn.addEventListener('click', async () => {
+        if (!uploadedFile) {
+            alert('Please upload an image first.');
+            return;
+        }
+
+        let apiKey = '';
+        try {
+            const response = await fetch('/api-key');
+            if (response.ok) {
+                const data = await response.json();
+                apiKey = data.api_key;
+            } else {
+                console.error('Failed to fetch API key');
+                alert('Error: Could not fetch API key.');
+                return;
+            }
+        } catch (error) {
+            console.error('An error occurred while fetching the API key:', error);
+            alert('An error occurred while fetching the API key.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', uploadedFile);
+
+        try {
+            const response = await fetch('/remove-background/', {
+                method: 'POST',
+                headers: {
+                    'X-API-Key': apiKey,
+                },
+                body: formData,
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                resultImage.src = url;
+                resultImage.style.display = 'block';
+                originalImage.style.display = 'none';
+                downloadBtn.href = url;
+                downloadBtn.style.display = 'block';
+            } else {
+                const error = await response.json();
+                alert(`Error: ${error.detail}`);
+            }
+        } catch (error) {
+            console.error('An error occurred:', error);
+            alert('An error occurred while removing the background.');
+        }
+    });
+});

@@ -2,6 +2,7 @@ from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import io
 import os
@@ -16,10 +17,10 @@ app = FastAPI()
 
 # Mount the 'static' directory to serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
+ 
 @app.get("/")
 async def read_root():
-    return {"message": "API is running"}
+    return FileResponse('static/index.html')
 
 @app.get("/api-key")
 async def get_api_key_for_frontend():
@@ -82,16 +83,19 @@ def remove_background(image_path):
 
 @app.post("/remove-background/")
 async def remove_background_api(file: UploadFile = File(...), api_key: str = Depends(get_api_key)):
-    # Save the uploaded file temporarily
-    with open("temp_image.jpg", "wb") as buffer:
-        buffer.write(await file.read())
+    try:
+        # Save the uploaded file temporarily
+        with open("temp_image.jpg", "wb") as buffer:
+            buffer.write(await file.read())
 
-    # Remove the background
-    result_image = remove_background("temp_image.jpg")
+        # Remove the background
+        result_image = remove_background("temp_image.jpg")
 
-    # Save the result to a byte stream
-    img_byte_arr = io.BytesIO()
-    result_image.save(img_byte_arr, format='PNG')
-    img_byte_arr.seek(0)
+        # Save the result to a byte stream
+        img_byte_arr = io.BytesIO()
+        result_image.save(img_byte_arr, format='PNG')
+        img_byte_arr.seek(0)
 
-    return StreamingResponse(img_byte_arr, media_type="image/png")
+        return StreamingResponse(img_byte_arr, media_type="image/png")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

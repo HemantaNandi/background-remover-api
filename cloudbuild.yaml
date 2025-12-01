@@ -1,0 +1,17 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/transparent-pics-api/background-remover', '.']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/transparent-pics-api/background-remover']
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+  - 'run'
+  - 'deploy'
+  - 'background-remover'
+  - '--image=gcr.io/transparent-pics-api/background-remover'
+  - '--region=us-central1'
+  - '--platform=managed'
+  - '--allow-unauthenticated'
+images:
+- 'gcr.io/transparent-pics-api/background-remover'

@@ -8,6 +8,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install any needed packages specified in requirements.txt
+RUN apt-get update && apt-get install -y libgl1 libglib2.0-0
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the .env file first
@@ -16,8 +17,9 @@ COPY .env .
 # Copy the rest of the application's code into the container at /app
 COPY . .
 
-# Expose port 8000 to the outside world
-EXPOSE 8000
+# Make the entrypoint script executable
+RUN chmod +x /app/entrypoint.sh
 
 # Run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 8080
+ENTRYPOINT ["/app/entrypoint.sh"]

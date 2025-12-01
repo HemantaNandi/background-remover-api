@@ -6,14 +6,26 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import io
 import os
+import logging
 from dotenv import load_dotenv
-import torch
-from torchvision.models.segmentation import deeplabv3_resnet101
+from rembg import remove
 from PIL import Image
-import torchvision.transforms as T
-import numpy as np
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+@app.middleware("http")
+async def log_requests(request, call_next):
+    logger.info(f"Incoming request: {request.method} {request.url}")
+    logger.info(f"Headers: {request.headers}")
+    response = await call_next(request)
+    return response
+
+# Get port from environment variable, default to 8000
+port = int(os.getenv("PORT", 8000))
 
 # Mount the 'static' directory to serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -46,40 +58,11 @@ async def get_api_key(api_key: str = Depends(api_key_header)):
         )
     return api_key
 
-# Load the pre-trained model
-model = deeplabv3_resnet101(pretrained=True)
-model.eval()
-
-# Define the transformation
-transform = T.Compose([
-    T.ToTensor(),
-    T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-])
-
 def remove_background(image_path):
-    input_image = Image.open(image_path).convert("RGB")
-    input_tensor = transform(input_image)
-    input_batch = input_tensor.unsqueeze(0)
-
-    with torch.no_grad():
-        output = model(input_batch)['out'][0]
-    output_predictions = output.argmax(0)
-
-    # create a binary (black and white) mask of the profile foreground
-    mask = output_predictions.byte().cpu().numpy()
-    background = np.zeros(mask.shape)
-    bin_mask = np.where(mask, 255, background).astype(np.uint8)
-
-    # apply the binary mask to the original image
-    # Create a new image with an alpha channel
-    output_image = Image.new("RGBA", input_image.size)
-    output_image.paste(input_image, (0, 0))
-
-    # Apply the mask to the alpha channel
-    alpha = Image.fromarray(bin_mask)
-    output_image.putalpha(alpha)
-
-    return output_image
+    with open(image_path, "rb") as f:
+        input_image = f.read()
+    output_image = remove(input_image)
+    return Image.open(io.BytesIO(output_image))
 
 @app.post("/remove-background/")
 async def remove_background_api(file: UploadFile = File(...), api_key: str = Depends(get_api_key)):

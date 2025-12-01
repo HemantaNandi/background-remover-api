@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading Bar and Timer</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.0.0/dist/browser.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1 id="title" class="title">transparent.pics</h1>
+        <h2 class="subtitle">Free AI Image Background Remover</h2>
+        <div class="image-container">
+            <div class="image-upload-container">
+                <input type="file" id="image-upload" style="display: none;" accept="image/*">
+                <label for="image-upload" id="upload-label" class="upload-label">
+                    <span>Click to upload an image</span>
+                    <span class="file-types">PNG, JPG, etc.</span>
+                </label>
+            </div>
+            <img id="processed-image" class="hidden" alt="Processed Image">
+        </div>
+        <div class="loading-bar-container" style="display: none;">
+            <div class="loading-bar" id="loading-bar"></div>
+        </div>
+        <p id="time-taken-p" style="display: none;">Time taken: <span id="time-taken">0</span> seconds</p>
+        <button id="start-button" disabled>Free Download</button>
+        <button id="download-button" style="display: none;">Download Image</button>
+    </div>
+    <script src="script.js" defer></script>
+</body>
+</html>
